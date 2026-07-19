@@ -1,0 +1,52 @@
+name: Claude Code
+
+# Pre-wired Claude Code GitHub Action.
+# One-time setup per fork: run `/install-github-app` in Claude Code (installs the
+# GitHub app and adds the ANTHROPIC_API_KEY secret), or add the secret manually
+# under repo Settings → Secrets and variables → Actions.
+# Then mention @claude in any issue or PR comment to trigger it.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional: customize the trigger phrase (default: @claude)
+          # trigger_phrase: "/claude"
+          # Optional: trigger when a specific user is assigned to an issue
+          # assignee_trigger: "claude-bot"
+          # Optional: pass CLI args (model, turn limit, allowed tools, system prompt)
+          # claude_args: |
+          #   --model claude-sonnet-5
+          #   --max-turns 15
+          #   --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
