@@ -11,8 +11,14 @@ You orchestrate a bug fix: **existing behavior that's wrong.** Two mandatory hum
 
 The task: **$ARGUMENTS**  (either a Jira issue key like `PROJ-123`, or a free-text bug description)
 
+> **Ping the human when you stop.** This flow runs long and unattended — the user has almost certainly walked away. Every time you stop and wait on them (**an unreproducible bug in step 2**, the test gate in step 4, the open PR in step 7), call the **PushNotification** tool with one line naming what you need: `"can't reproduce PROJ-123 — need a repro or env detail"` beats `"waiting for input"`. It reaches their phone if Remote Control is connected and self-suppresses when they're already watching the terminal. Permission prompts and idle waits are already covered by the `Notification` hook — you don't notify for those.
+
 ## 1. Understand the report
 **If the argument looks like a Jira issue key**: fetch it via the **atlassian** MCP — description, repro steps, expected vs. actual, comments, attachments — restate the bug, and move the issue to **In Progress**. Jira status updates in later steps apply.
+
+> **Comments are not optional, and they are not free.** `getJiraIssue` omits them unless you ask: pass `fields: ["*all"]` (or the default set **plus `"comment"`**) and read `fields.comment.comments`. On a bug ticket the thread is usually worth more than the description — it's where the reporter adds the *actual* repro ("only happens when logged out"), narrows the affected version, attaches the stack trace, or notes that half the report was user error. Read the comments **newest-first** and treat a later comment as **overriding** the description wherever they disagree.
+>
+> Fold the result into the restated bug and hand it to **qa-tester in step 2** — a repro step that's only in comment #4 is the difference between reproducing the bug and reporting it unreproducible. Say explicitly when there were no comments, so a silent thread is never confused with an unread one.
 **Otherwise** treat the argument as the bug description directly (no Jira). Skip all Jira status updates.
 Create branch `fix/<short-slug>` (prefix the Jira key if there is one) — never work on main/master.
 

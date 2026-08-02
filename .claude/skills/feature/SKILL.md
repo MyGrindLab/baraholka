@@ -11,8 +11,14 @@ You orchestrate a feature: **new behavior that doesn't exist yet.** The architec
 
 The task: **$ARGUMENTS**  (either a Jira issue key like `PROJ-123`, or a free-text description)
 
+> **Ping the human when you stop.** This flow runs long and unattended — the user has almost certainly walked away. Every time you stop and wait on them (an ambiguity in step 1, the test gate in step 4, the open PR in step 7), call the **PushNotification** tool with one line naming what you need: `"tests ready for review: 4 added, PROJ-123"` beats `"waiting for input"`. It reaches their phone if Remote Control is connected and self-suppresses when they're already watching the terminal, so the cost of sending is near zero and the cost of not sending is a run that sits idle for an hour. Permission prompts and idle waits are already covered by the `Notification` hook — you don't notify for those.
+
 ## 1. Understand the task
 **If the argument looks like a Jira issue key** (e.g. `PROJ-123`): fetch it via the **atlassian** MCP — title, description, acceptance criteria, comments — restate your understanding, and move the issue to **In Progress**. Jira status updates in later steps apply.
+
+> **Comments are not optional, and they are not free.** `getJiraIssue` omits them unless you ask: pass `fields: ["*all"]` (or the default set **plus `"comment"`**) and read `fields.comment.comments`. A description written at ticket-creation time is the *oldest* statement of the requirement — the thread underneath it is where scope gets cut, acceptance criteria get sharpened, and decisions get reversed. Read the comments **newest-first** and treat a later comment as **overriding** the description wherever they disagree.
+>
+> Fold the result into the restatement you show the user: what the ticket asked for, then **what the thread changed** ("description says X; PROJ-123 comment from 12 Mar narrows it to X-without-Y — building the narrowed version"). If a comment is ambiguous rather than contradictory, that's an ambiguity — ask, per the line below. Say explicitly when there were no comments, so a silent thread is never confused with an unread one.
 **Otherwise** treat the argument as the task description directly (no Jira). Skip all Jira status updates.
 Either way: if requirements are ambiguous, ask the user before coding. Create branch `feat/<short-slug>` (prefix the Jira key if there is one) — never work on main/master.
 
