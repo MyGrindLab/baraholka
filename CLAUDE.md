@@ -29,7 +29,7 @@
 - `devops` — `Makefile` + `infrastructure/`, CI/CD, k8s, Argo GitOps
 
 ## Workflows (`.claude/skills/`)
-`/feature` and `/fix` accept a **Jira key** (reads the task via Jira MCP, writes status back) **or a free-text description**, and both end at: 100% green + **human-verified tests** → PR + changelog line + agent trace. Approval/merge is human-only.
+`/feature` and `/fix` accept a **Jira key** (reads the task via Jira MCP, writes status back) **or a free-text description**, and both end at: 100% green → PR + changelog line + agent trace. **They run unattended**: questions and judgment calls become Jira comments and the run continues under a stated assumption, rather than halting for input. Approval/merge is human-only.
 - `/feature <task-number | description>` — **architect-led**: design → split → build → test. New behavior.
 - `/fix <task-number | description>` — **qa-led**: reproduce → diagnose → hand the bug report to the implementer who patches it. Broken behavior.
 - `/init-project <confluence-url | PROJ | description>` — **run once after forking**: reads the project description (a Confluence doc link is the best input) and writes this file + `README.md` + per-package `CLAUDE.md`s. Read-only on Jira/Confluence.

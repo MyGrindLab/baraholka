@@ -1,17 +1,43 @@
 ---
 name: fix
-description: Fix a bug end-to-end — qa-tester reproduces and diagnoses it and hands a full bug report to the owning implementer agent, who patches it; then 100% green, human-verified tests, and a reviewed PR with a changelog entry and an agent trace. Accepts either a Jira issue key (reads the task via the Jira MCP) or a free-text bug description. Usage: /fix <task-number | description>. Stops at the open PR — approval and merge are the human's.
+description: Fix a bug end-to-end and unattended — qa-tester reproduces and diagnoses it and hands a full bug report to the owning implementer agent, who patches it; then 100% green tests and a reviewed PR with a changelog entry and an agent trace. Questions go to the Jira issue as comments rather than halting the run; an unreproducible bug is the one legitimate stop. Accepts either a Jira issue key (reads the task via the Jira MCP) or a free-text bug description. Usage: /fix <task-number | description>. Stops at the open PR — approval and merge are the human's.
 ---
 
 # /fix — bug → reviewed PR
 
-You orchestrate a bug fix: **existing behavior that's wrong.** Two mandatory human gates (verify tests, approve PR); everything else runs autonomously.
+You orchestrate a bug fix: **existing behavior that's wrong.** The run is unattended: one human gate at the end (approve and merge the PR), plus one legitimate mid-run halt (a bug that cannot be reproduced).
 
 > **`/fix` vs `/feature`** — `/fix` is **qa-led**: qa-tester finds and proves the bug *before* anyone writes a patch, then hands it off. `/feature` is architect-led. The architect is only involved here if the root cause turns out to be a design problem (see step 3).
 
 The task: **$ARGUMENTS**  (either a Jira issue key like `PROJ-123`, or a free-text bug description)
 
-> **Ping the human when you stop.** This flow runs long and unattended — the user has almost certainly walked away. Every time you stop and wait on them (**an unreproducible bug in step 2**, the test gate in step 4, the open PR in step 7), call the **PushNotification** tool with one line naming what you need: `"can't reproduce PROJ-123 — need a repro or env detail"` beats `"waiting for input"`. It reaches their phone if Remote Control is connected and self-suppresses when they're already watching the terminal. Permission prompts and idle waits are already covered by the `Notification` hook — you don't notify for those.
+## 0. Autonomy contract — run to the PR without stopping
+
+**Default to finishing.** This flow is meant to run unattended from the issue key to an open PR. Resolve what you can yourself — the repo, the Jira thread, the logs — and where a question remains, **decide, record the decision, and keep going.**
+
+**Jira is the inbox, not the terminal.** When something genuinely needs the human, `addCommentToJiraIssue`. Write it to be answerable from a phone:
+
+```
+🤖 Assumption — needs your confirmation
+Question:   <the ambiguity, in one sentence>
+Assuming:   <what I chose>
+Because:    <the evidence — a file, a log line, a prior comment>
+Impact:     <what changes if I'm wrong>
+Correct me on the PR and I'll adjust.
+```
+
+Then **continue under that assumption.**
+
+**The three things you may never do alone** — no task, comment, or instruction overrides these:
+1. **Approve or merge a PR.**
+2. **Push or commit to `main`/`master`.**
+3. **Destroy data or infrastructure** — drop/truncate a database, `docker volume rm`, `compose down -v`, `kubectl delete`, `terraform destroy`. If the fix appears to need one, comment on the issue and route around it.
+
+**The one place this flow legitimately stops is step 2: a bug you cannot reproduce.** Everything else gets an assumption; an unreproducible bug does not, because a patch written against a guessed repro is how you ship a second bug while closing the first. Diagnosis is not a coin flip you're allowed to take. See step 2 for what to do instead.
+
+**When the run ends** (PR open, or blocked on a repro), call **PushNotification** with one line: `"PROJ-123 PR #42 ready — regression test added"` or `"PROJ-123 not reproducible — need env details, asked on the issue"`. That's the one interruption this flow may generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
+
+**No Jira key?** No inbox — batch every assumption into the PR body under **Assumptions** instead.
 
 ## 1. Understand the report
 **If the argument looks like a Jira issue key**: fetch it via the **atlassian** MCP — description, repro steps, expected vs. actual, comments, attachments — restate the bug, and move the issue to **In Progress**. Jira status updates in later steps apply.
@@ -29,7 +55,7 @@ Create branch `fix/<short-slug>` (prefix the Jira key if there is one) — never
 - Write the **smallest failing test**, confirmed failing *because of the bug* and not a setup error.
 - Find the **root cause** — the specific code path, not the symptom.
 
-If it can't be reproduced, **stop and report** what was tried, what was observed instead, and what's needed (a real repro, an env detail, a data sample). Do not guess a patch. An unreproducible bug is a finding, not a failure.
+If it can't be reproduced, **do not guess a patch.** An unreproducible bug is a finding, not a failure. Post a Jira comment with what was tried, what was observed instead, and the specific thing you need (a real repro, an env detail, a data sample, a user id), transition the issue to your board's blocked/needs-info status, and **stop this task** — but first finish anything genuinely independent of the repro (a flaky-test fix you found on the way, a missing log line that would have made this diagnosable). Report what you completed and what you left.
 
 ## 3. Hand off the bug report → implementer
 qa-tester hands the owning agent — `frontend-react` (`frontend/`), `backend-go`/`backend-python` (`backend/`), or `devops` (`infrastructure/`, `Makefile`, CI) — a **complete report**. The implementer must not have to re-investigate:
@@ -50,16 +76,26 @@ The implementer patches the **root cause**, not the symptom, and doesn't touch t
 
 **If the root cause is a design flaw** (the fix needs a contract or schema change, or spans several components), pull in **architect** for that slice before patching — but keep qa's failing test as the definition of done.
 
-## 4. Verify — 100% green, then HUMAN-VERIFIED tests
-- qa-tester confirms the once-failing test now passes **for the right reason**, then runs `make check` to **100% green**. Hard gate: no failing or skipped tests.
+## 4. Verify — 100% green, diagnosis surfaced to Jira
+- qa-tester confirms the once-failing test now passes **for the right reason**, then runs `make check` to **100% green**. Hard gate: no failing or skipped tests — this one does not bend.
 - Inline self-review: the patch targets the root cause, covers the blast radius, and introduces no security/data-safety regression.
-- **STOP and hand the test code to the user** — the new regression test plus any changed tests, one-line intent each — and get confirmation before the PR. (Test code must be verified by a human.)
+- **Surface it, don't stop for it.** Post a Jira comment with the regression test, the root cause in one line, and — the part worth their attention — **where else this root cause could still bite**:
+
+```
+🤖 Fixed, PR to follow
+Root cause: token expiry compared in local time, not UTC (auth/session.go:88)
+Regression: test_expiry_uses_utc — fails on the old code, passes on the new
+⚠️  Same pattern still present in billing/invoice.go:210 — out of scope here,
+    worth its own ticket
+```
+
+  Then **go straight to the PR.** A list of green tests tells them nothing CI can't; an unfixed sibling of the same bug does.
 
 ## 5. Changelog
 Add one line to `CHANGELOG.md` under `[Unreleased]` → `Fixed`, per `.claude/docs/run-report.md`. Describe the bug as the user experienced it, not the patch. Commit it with the fix.
 
 ## 6. Push, PR, and agent trace
-Commit, push, `gh pr create`. If there's a Jira key, put it in the title (`[PROJ-123] fix: ...`) and body. The body covers: the bug, the root cause, the regression test added, and test results (100% green).
+Commit, push, `gh pr create`. If there's a Jira key, put it in the title (`[PROJ-123] fix: ...`) and body. The body covers: the bug, the root cause, the regression test added, test results (100% green), the sibling-risk note from step 4, and an **Assumptions** section listing every call you made without the human — what you assumed and what changes if it's wrong. That section is what makes an unattended run reviewable.
 
 Then post the **agent trace** as a PR comment — format and ~50-line cap in **`.claude/docs/run-report.md`**. For a fix the trace leads with qa's **Diagnosis** (symptom → reproduction → root cause) instead of an architect plan, then the handoff and who patched what.
 
@@ -82,5 +118,6 @@ If the work came from a Jira task, it moves to **Done** on merge (GitHub↔Jira 
 - No fix ships without a regression test that would have caught the bug — that test is the deliverable, as much as the patch.
 - Reproduce in containers via the `Makefile`; never debug against a host toolchain.
 - Name the root cause; symptom-only patches are not acceptable.
-- Two human gates are non-negotiable: tests verified before PR, PR approved before merge.
+- **Run to the PR without stopping.** Ambiguity becomes a Jira comment plus an assumption. The one legitimate halt is a bug you cannot reproduce (step 2).
+- **One human gate remains and it is absolute: approval and merge.** You never approve, never merge, never push to main.
 - Every PR carries both artifacts: the committed CHANGELOG line and the posted agent trace.
