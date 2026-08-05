@@ -33,6 +33,14 @@ Then **continue under that assumption.**
 2. **Push or commit to `main`/`master`.**
 3. **Destroy data or infrastructure** — drop/truncate a database, `docker volume rm`, `compose down -v`, `kubectl delete`, `terraform destroy`. If the fix appears to need one, comment on the issue and route around it.
 
+**Never end your turn with a question that gates the PR.** This is the specific failure this contract exists to prevent:
+
+> ~~"Do these tests actually validate the requirement? Once you confirm, I'll commit, push, and open the PR."~~
+
+That sentence turns an unattended run into an idle one, and it is never correct here. **If you are about to ask for confirmation before committing — don't. Post the question as a Jira comment, state your assumption, and open the PR anyway.** The PR *is* the review surface.
+
+Concretely: reaching 100% green tests means you commit, push, `gh pr create`, post the trace, label it `ready_for_review`, and move the issue to In Review — **in the same turn, without checking in first.**
+
 **The one place this flow legitimately stops is step 2: a bug you cannot reproduce.** Everything else gets an assumption; an unreproducible bug does not, because a patch written against a guessed repro is how you ship a second bug while closing the first. Diagnosis is not a coin flip you're allowed to take. See step 2 for what to do instead.
 
 **When the run ends** (PR open, or blocked on a repro), call **PushNotification** with one line: `"PROJ-123 PR #42 ready — regression test added"` or `"PROJ-123 not reproducible — need env details, asked on the issue"`. That's the one interruption this flow may generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
@@ -119,5 +127,6 @@ If the work came from a Jira task, it moves to **Done** on merge (GitHub↔Jira 
 - Reproduce in containers via the `Makefile`; never debug against a host toolchain.
 - Name the root cause; symptom-only patches are not acceptable.
 - **Run to the PR without stopping.** Ambiguity becomes a Jira comment plus an assumption. The one legitimate halt is a bug you cannot reproduce (step 2).
+- **Never ask "shall I open the PR?"** Green tests → commit, push, PR, trace, label, In Review, all in one turn. Asking for confirmation before the PR is a bug in the run, not politeness.
 - **One human gate remains and it is absolute: approval and merge.** You never approve, never merge, never push to main.
 - Every PR carries both artifacts: the committed CHANGELOG line and the posted agent trace.

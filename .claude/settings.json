@@ -54,7 +54,31 @@
       "mcp__atlassian__getCompassCustomFieldDefinitions",
       "mcp__atlassian__createCompassComponent",
       "mcp__atlassian__createCompassComponentRelationship",
-      "mcp__atlassian__createCompassCustomFieldDefinition"
+      "mcp__atlassian__createCompassCustomFieldDefinition",
+
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_navigate_back",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_find",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_hover",
+      "mcp__playwright__browser_select_option",
+      "mcp__playwright__browser_drag",
+      "mcp__playwright__browser_drop",
+      "mcp__playwright__browser_file_upload",
+      "mcp__playwright__browser_handle_dialog",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_network_request",
+      "mcp__playwright__browser_tabs",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_close"
     ]
   },
   "autoMode": {
@@ -77,7 +101,9 @@
       "Dropping, truncating, or rolling back a migration on any database, including the local dev one.",
       "docker system prune, docker volume rm/prune, or compose down -v — these destroy dev data that is expensive to recreate.",
       "Force-pushing, force-deleting a branch, git reset --hard, git clean, or any history rewrite.",
-      "kubectl delete, terraform destroy, helm uninstall, or argocd app delete against any cluster."
+      "kubectl delete, terraform destroy, helm uninstall, or argocd app delete against any cluster.",
+      "mcp__playwright__browser_run_code_unsafe — arbitrary Playwright code outside the structured browser_* tools. Every normal E2E interaction has a dedicated tool; reach for this only when one genuinely does not exist, and say why.",
+      "Driving the browser against any origin that is not the local stack under test — E2E runs against localhost, not production or a third-party site."
     ],
     "hard_deny": [
       "$defaults",

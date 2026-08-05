@@ -33,7 +33,15 @@ Then **continue under that assumption.** Do not transition the issue to Blocked 
 2. **Push or commit to `main`/`master`.** Always a `feat/` branch and a PR.
 3. **Destroy data or infrastructure** — drop/truncate a database, `docker volume rm`, `compose down -v`, `kubectl delete`, `terraform destroy`. If the work seems to require one, comment on the issue and route around it.
 
-**Stop and wait only when** you cannot proceed without a credential, an access grant, or a product decision with no defensible default — i.e. any assumption would be a coin flip on scope. That is rare. When it happens, comment on the issue, transition it to your board's blocked status, **finish every part of the task that doesn't depend on the answer**, and report what you left out and why.
+**Never end your turn with a question that gates the PR.** This is the specific failure this contract exists to prevent:
+
+> ~~"Do these tests actually validate the requirement? Once you confirm, I'll commit, push, and open the PR."~~
+
+That sentence turns an unattended run into an idle one, and it is never correct here. **If you are about to ask for confirmation before committing — don't. Post the question as a Jira comment, state your assumption, and open the PR anyway.** The PR *is* the review surface; a question asked there costs the human one glance, the same question asked in the terminal costs them the whole run.
+
+Concretely: reaching 100% green tests means you commit, push, `gh pr create`, post the trace, label it `ready_for_review`, and move the issue to In Review — **in the same turn, without checking in first.**
+
+**Stop and wait only when** you cannot proceed without a credential, an access grant, or a product decision with no defensible default — i.e. any assumption would be a coin flip on scope. That is rare, and "is my work good?" is never one of them. When it happens, comment on the issue, transition it to your board's blocked status, **finish every part of the task that doesn't depend on the answer**, and report what you left out and why.
 
 **When the run ends** (PR open, or genuinely blocked), call **PushNotification** with one line: `"PROJ-123 PR #42 ready for review — 4 tests added, 2 assumptions logged on the issue"`. That is the one interruption this flow is allowed to generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
 
@@ -106,6 +114,7 @@ If the work came from a Jira task, it should move to **Done** when the PR merges
 - Input is either a Jira key or a free-text description. If it's a Jira key, read the task first and write status back so the board stays in sync; if it's free text, skip Jira entirely.
 - All builds, tests, and runs happen **in containers**, through the `Makefile`. Host toolchains are not used.
 - **Run to the PR without stopping.** Ambiguity becomes a Jira comment plus an assumption, not a halt. See the autonomy contract in step 0.
+- **Never ask "shall I open the PR?"** Green tests → commit, push, PR, trace, label, In Review, all in one turn. Asking for confirmation before the PR is a bug in the run, not politeness.
 - **One human gate remains and it is absolute: approval and merge.** You never approve, never merge, never push to main.
 - 100% passing tests is required to reach the PR — no exceptions without explicit user override.
 - Every PR carries both artifacts: the committed CHANGELOG line and the posted agent trace.
