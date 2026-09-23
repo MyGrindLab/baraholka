@@ -1,0 +1,91 @@
+[project]
+name = "baraholka"
+version = "1.0.0"
+description = "Telegram channel monitor with MongoDB storage and message grouping"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "apscheduler>=3.11.1",
+    "fastapi>=0.121.0",
+    "motor>=3.7.1",
+    "numpy>=2.3.4",
+    "openai>=2.7.1",
+    "pillow>=12.0.0",
+    "protobuf>=6.33.0",
+    "pycommontools>=0.0.2",
+    "pydantic-settings>=2.11.0",
+    "python-dotenv>=1.2.1",
+    "python-telegram-bot>=20.7",
+    "sentencepiece>=0.2.0",
+    "telethon>=1.41.2",
+    "uvicorn>=0.38.0",
+    "uvloop>=0.22.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", ]
+addopts = "-p no:warnings --cov=/app --cov-report=html"
+console_output_stype = "count"
+minversion = "7.2.0"
+pythonpath = "."
+filterwarnings = "ignore"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+
+[tool.coverage.run]
+omit = ["tests/*",]
+
+[tool.mypy]
+mypy_path = "/src"
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_redundant_casts = true
+strict_optional = true
+explicit_package_bases = true
+disable_error_code = ["no-redef"]
+plugins = ['pydantic.mypy']
+exclude = ["migrations"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = 'tests.*'
+disallow_untyped_defs = false
+check_untyped_defs = false
+strict_optional = false
+
+[tool.ruff]
+line-length = 88
+src = ["src"]
+exclude = [
+    "*.git",
+    "*.hg",
+    "*.mypy_cache",
+    "*.tox",
+    "*.venv",
+    "migrations",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "alembic",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "I"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["src", "commands", "main"]
+
+[tool.basedpyright]
+reportRedeclaration = false

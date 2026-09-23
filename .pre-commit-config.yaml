@@ -1,0 +1,41 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        language: python
+        language_version: python3.13
+        args: ["--config-file", "backend/pyproject.toml"]
+        exclude: "tests/|venv/|\\.venv/|alembic/|migrations/|src/infrastructure/grpc/proto/generated"
+        files: backend/
+        additional_dependencies:
+          - types-requests
+          - pydantic>=2.11.0
+          - pydantic-settings>=2.11.0
+          - fastapi>=0.121.0
+          - motor>=3.7.1
+          - python-telegram-bot>=20.7
+          - openai>=2.7.1
+          - apscheduler>=3.11.1
+          - pillow>=12.0.0
+
+default_language_version:
+  python: python3.13

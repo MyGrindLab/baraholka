@@ -1,0 +1,17 @@
+services:
+  baraholka-app:
+    image: baraholkabackend:local
+    container_name: baraholka-app
+    restart: unless-stopped
+    volumes:
+      - ../../backend/src:/app/src
+    ports:
+      - "8000:8080"
+    env_file:
+      - .env
+    networks:
+      - baraholka-network
+
+networks:
+  baraholka-network:
+    external: true

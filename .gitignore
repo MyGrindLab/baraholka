@@ -3,3 +3,29 @@
 .claude/settings.local.json
 .env
 !.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Telegram session files
+*.session
+*.session-journal
+
+# Local data
+data/

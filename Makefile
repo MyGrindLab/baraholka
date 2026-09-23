@@ -17,18 +17,18 @@
 
 TODO = @echo "Makefile: target '$@' is not filled in yet — see the header." && exit 1
 
-## --- to define once infrastructure/ is scaffolded -------------------------------
-# COMPOSE       := <compose invocation against the file(s) in infrastructure/>
-# RUN           := <one-shot wrapper, e.g. $(COMPOSE) run --rm>
-# FRONTEND_TEST := <frontend test command, run in its container>
-# FRONTEND_LINT := <frontend lint command>
-# FRONTEND_FMT  := <frontend format command>
-# BACKEND_TEST  := <backend test command, run in its container>
-# BACKEND_LINT  := <backend lint command>
-# BACKEND_FMT   := <backend format command>
+## --- component wiring ---------------------------------------------------
+BACKEND_ENV     := --env-file infrastructure/backend/.env
+COMPOSE_BACKEND := docker compose -p baraholka-backend $(BACKEND_ENV) -f infrastructure/backend/docker-compose.yml
+COMPOSE_INFRA   := docker compose -p baraholka-infra $(BACKEND_ENV) -f infrastructure/backend/docker-compose-infra.yml
+BACKEND_IMAGE   := baraholkabackend:local
+BACKEND_RUN     := $(COMPOSE_BACKEND) run --rm baraholka-app
+BACKEND_TEST    := uv run pytest
+BACKEND_LINT    := uv run ruff check src/ && uv run mypy src/
+BACKEND_FMT     := uv run ruff format src/
 
 .DEFAULT_GOAL := help
-.PHONY: help up up-frontend up-backend down restart ps logs build rebuild \
+.PHONY: help up up-frontend up-backend up-infra down down-infra restart ps logs build rebuild \
         sh-frontend sh-backend test test-frontend test-backend e2e \
         lint lint-frontend lint-backend fmt check migrate clean
 
@@ -39,38 +39,48 @@ help: ## Show available targets
 ## --- run ---------------------------------------------------------------
 
 up: ## Start the full stack (detached)
-	$(TODO)
+	$(MAKE) up-infra
+	$(MAKE) up-backend
 
 up-frontend: ## Start only the frontend and what it depends on
-	$(TODO)
+	$(TODO)  # no frontend image yet — devops to add infrastructure/frontend/
+
+up-infra: ## Start MongoDB + mongo-express
+	docker network inspect baraholka-network >/dev/null 2>&1 || docker network create baraholka-network
+	$(COMPOSE_INFRA) up --detach
+
+down-infra: ## Stop MongoDB + mongo-express
+	$(COMPOSE_INFRA) down
 
 up-backend: ## Start only the backend and what it depends on
-	$(TODO)
+	$(MAKE) build
+	$(COMPOSE_BACKEND) up --detach
 
 down: ## Stop the stack, keep volumes
-	$(TODO)
+	$(COMPOSE_BACKEND) down
 
 restart: down up ## Restart the full stack
 
 ps: ## Show container status
-	$(TODO)
+	$(COMPOSE_BACKEND) ps
+	$(COMPOSE_INFRA) ps
 
 logs: ## Tail logs from all services (make logs S=<service> for one)
-	$(TODO)
+	$(COMPOSE_BACKEND) logs -f $(S)
 
 ## --- build -------------------------------------------------------------
 
 build: ## Build all images
-	$(TODO)
+	docker build --tag $(BACKEND_IMAGE) -f infrastructure/backend/Dockerfile .
 
 rebuild: ## Rebuild all images from scratch
-	$(TODO)
+	docker build --no-cache --tag $(BACKEND_IMAGE) -f infrastructure/backend/Dockerfile .
 
 sh-frontend: ## Shell into the frontend container
 	$(TODO)
 
 sh-backend: ## Shell into the backend container
-	$(TODO)
+	$(BACKEND_RUN) bash
 
 ## --- verify ------------------------------------------------------------
 
@@ -80,7 +90,7 @@ test-frontend: ## Run frontend tests in its container
 	$(TODO)
 
 test-backend: ## Run backend tests in its container
-	$(TODO)
+	$(BACKEND_RUN) $(BACKEND_TEST)
 
 e2e: ## Bring the stack up for browser E2E (driven via the Playwright MCP)
 	$(TODO)
@@ -91,10 +101,10 @@ lint-frontend:
 	$(TODO)
 
 lint-backend:
-	$(TODO)
+	$(BACKEND_RUN) sh -c '$(BACKEND_LINT)'
 
 fmt: ## Format all code in place
-	$(TODO)
+	$(BACKEND_RUN) $(BACKEND_FMT)
 
 check: lint test ## Full pre-PR gate — must be green before a PR is opened
 
@@ -104,4 +114,5 @@ migrate: ## Apply database migrations
 	$(TODO)
 
 clean: ## Stop everything and delete volumes (destroys local data)
-	$(TODO)
+	$(COMPOSE_BACKEND) down -v
+	$(COMPOSE_INFRA) down -v
