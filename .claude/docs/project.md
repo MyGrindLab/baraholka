@@ -8,9 +8,9 @@ The Jira project and Confluence space are **shared across several repos**, so ev
 ## Jira
 | key | value | notes |
 |-----|-------|-------|
-| Jira site | `<acme.atlassian.net>` | passed as `cloudId` |
+| Jira site | `grindlab.atlassian.net` | passed as `cloudId` |
 | Jira project key | `KAN` | shared by several repos |
-| Project label | `<app-base>` | **added to every issue** — the primary filter. Lowercase, no spaces |
+| Project label | `baraholka` | **added to every issue** — the primary filter. Lowercase, no spaces |
 | Project component | `<none \| component name>` | set too, if the shared project models repos as components |
 | Parent epic | `<none \| KAN-1>` | default parent for new issues, if your board uses one epic per repo |
 
@@ -29,7 +29,7 @@ Status rules every skill follows:
 - **`Done`** only when the PR merges, never at PR time.
 
 Project JQL — every skill scopes searches with this, never the bare project:
-`project = KAN AND labels = <app-base>`
+`project = KAN AND labels = baraholka`
 
 ## Confluence
 | key | value | notes |
