@@ -7,7 +7,7 @@ A **base repo you fork** to start a new full-stack project with the Claude Code 
 1. **Fork / "Use this template"** on GitHub → new project repo.
 2. Clone it and open Claude Code in the repo. You need **Docker** — nothing else.
 3. Run `/mcp` once to authenticate Jira (OAuth).
-4. Run `/init-project <link to your project description page>` — reads the doc and fills in `CLAUDE.md`, `README.md`, a `CLAUDE.md` per component, and the `Makefile`/compose placeholders. A Jira key (`/init-project PROJ`) or a one-sentence description works too.
+4. Run `/init-project <link to your project description page>` — reads the doc and fills in `CLAUDE.md`, `README.md`, a `CLAUDE.md` per component, and the `Makefile`/compose placeholders. A Jira key (`/init-project KAN`) or a one-sentence description works too.
 5. Run `/install-github-app` once to enable the `@claude` GitHub Action (installs the app + `ANTHROPIC_API_KEY` secret).
 6. Start building: `/feature <your first task>`. The first feature is usually scaffolding a component — `devops` fills in `infrastructure/` and the matching `Makefile` targets, and from then on `make up` runs the stack.
 
@@ -54,9 +54,15 @@ Roles live in **subagents**, not the main prompt — so having several experts c
 **Skills (your slash commands)** — each takes **a Jira key _or_ a free-text description**:
 - `/feature <task-number | description>` — new behavior → 100% green + human-verified tests → reviewed PR
 - `/fix <task-number | description>` — broken behavior → 100% green + human-verified tests → reviewed PR
-- `/init-project <confluence-url | PROJ | description>` — run once per fork. **Paste the link to your project description page** (Confluence page, tiny `/wiki/x/` link, or space overview) and it reads the doc — following one level of child pages when the page is an index — for purpose, scope, component breakdown, and intended stack. Give it a Jira key instead (or as well) and it adds the project's components and issue history. It checks all of that against what's actually in the repo, then writes the docs, fills the `Makefile`/compose placeholders, and drops the template parts you don't use. Read-only on Jira/Confluence; shows you the diff before committing, and leaves anything it can't verify as an open question rather than inventing it.
+- `/init-project <confluence-url | KAN | description>` — run once per fork. **Paste the link to your project description page** (Confluence page, tiny `/wiki/x/` link, or space overview) and it reads the doc — following one level of child pages when the page is an index — for purpose, scope, component breakdown, and intended stack. Give it a Jira key instead (or as well) and it adds the project's components and issue history. It checks all of that against what's actually in the repo, then writes the docs, fills the `Makefile`/compose placeholders, and drops the template parts you don't use. Read-only on Jira/Confluence; shows you the diff before committing, and leaves anything it can't verify as an open question rather than inventing it.
 
-Both run: **1.** understand the task (Jira MCP if given a key, else the description) → **2.** subagents work in containers → **3.** test to 100% green, then *you verify the test code* → **4.** changelog line + push + open PR with an agent trace, labeled `ready_for_review` → **5.** *you* approve/merge → **6.** Jira status updates (when there's a linked task).
+**Backlog, docs, and prod** — Jira and Confluence are usually **shared across several projects**, so each repo records its own identifiers in `.claude/docs/project.md` (Jira key + **project label**, Confluence root page + title prefix, prod URL + critical journeys). Every issue gets the project label and every search is scoped by it. The file ships as a template; the first skill that needs a value asks for it and writes it in.
+- `/jira-task <description> [bug|story|task]` — one issue in the standard format (`.claude/docs/jira-task-format.md`): typed, labeled, prioritized, with repo-grounded description and checkable acceptance criteria. Duplicate-checks first; shows the draft before creating.
+- `/analyze-project [area | focus]` — read-only audit for bugs, security, performance, test gaps, tech debt, infra/DX. Every finding needs file:line evidence and is re-verified; you approve the list before anything is filed.
+- `/docs-update [page | topic]` — keeps a managed Confluence page tree (Overview, Architecture, Components, Runbook, API, Release notes) in sync with the code. Only edits pages carrying its marker line; human-owned pages get a comment instead; never deletes.
+- `/prod-check [journey | focus]` — exploratory, **read-only** check of live prod via Playwright: console errors, failed requests, broken links, mobile layout, a11y, slow pages, optional read-only `kubectl logs`. Reproduces each problem twice, then files confirmed bugs with evidence. Never submits a form that changes data.
+
+`/feature` and `/fix` both run: **1.** understand the task (Jira MCP if given a key, else the description) → **2.** subagents work in containers → **3.** test to 100% green, then *you verify the test code* → **4.** changelog line + push + open PR with an agent trace, labeled `ready_for_review` → **5.** *you* approve/merge → **6.** Jira status updates (when there's a linked task).
 
 ### `/feature` vs `/fix` — different leads, on purpose
 

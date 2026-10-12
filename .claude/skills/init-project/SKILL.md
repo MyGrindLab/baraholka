@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Initialize a freshly forked repo — read the project description from a Confluence/Jira doc link or a Jira project key via the atlassian MCP, confirm the frontend/backend/infrastructure layout, then write a common root CLAUDE.md + README.md. Documentation only: it never scaffolds a component or picks a framework. Usage: /init-project <confluence-url | PROJ | description>. Run once, right after forking.
+description: Initialize a freshly forked repo — read the project description from a Confluence/Jira doc link or a Jira project key via the atlassian MCP, confirm the frontend/backend/infrastructure layout, then write a common root CLAUDE.md + README.md. Documentation only: it never scaffolds a component or picks a framework. Usage: /init-project <confluence-url | KAN | description>. Run once, right after forking.
 ---
 
 # /init-project — fork → a repo that describes itself
@@ -9,7 +9,7 @@ You turn this freshly forked template into *this* project's repo: `CLAUDE.md` an
 
 This base is usually forked into a **monorepo**, so the defining job of this skill is the **split**: the root files stay common, per-package detail goes into nested files. Get that wrong and the root `CLAUDE.md` becomes a pile of half-true facts loaded on every message.
 
-The project: **$ARGUMENTS** — a **link to the project description doc** (Confluence page, the best input), a Jira project key like `PROJ`, free text, or several of these together.
+The project: **$ARGUMENTS** — a **link to the project description doc** (Confluence page, the best input), a Jira project key like `KAN`, free text, or several of these together.
 
 ## 1. Resolve the input
 `cloudId`: take the **hostname straight from the URL** (`acme.atlassian.net`) and pass it as `cloudId` — that works for every atlassian tool. Only fall back to `getAccessibleAtlassianResources` if it's rejected or there's no URL to read it from.
@@ -19,8 +19,8 @@ The project: **$ARGUMENTS** — a **link to the project description doc** (Confl
 | `…/wiki/spaces/SPACE/pages/123456789/Title` | `getConfluencePage` with `pageId: "123456789"` → **step 2a** |
 | `…/wiki/x/Fc1bBw` (tiny link) | `getConfluencePage` with `pageId: "Fc1bBw"` — it accepts tiny-link IDs → **step 2a** |
 | `…/wiki/spaces/SPACE/overview` (or a space link) | `getPagesInConfluenceSpace` for that space key, pick the overview/home page → **step 2a** |
-| `…/jira/software/projects/PROJ/…` or `…/browse/PROJ-123` | project key is `PROJ` → **step 2b** |
-| A bare key like `PROJ` | → **step 2b** |
+| `…/jira/software/projects/KAN/…` or `…/browse/KAN-123` | project key is `KAN` → **step 2b** |
+| A bare key like `KAN` | → **step 2b** |
 | A non-Atlassian URL (Notion, Google Doc, raw page) | `WebFetch` it; if it needs auth, ask the user to paste the text |
 | Free text | that *is* the description → skip to step 3 |
 | Nothing | list visible Jira projects (`getVisibleJiraProjects`) and ask which one, offering "none — I'll describe it myself" |
@@ -41,7 +41,7 @@ Extract: what the product does and for whom, scope and non-goals, the component/
 Gather, in this order, stopping when you have enough:
 - `getVisibleJiraProjects` with the key as `searchString` → **name, key, description, lead, project type**. Jira project descriptions are often one stale line — treat a doc from 2a as the better source when you have both.
 - **Components** (`getJiraProjectIssueTypesMetadata`, and the `components` field on issues) → in a monorepo these usually mirror the packages one-for-one. Note the mapping; you'll use it in step 4.
-- Recent/oldest issues (`searchJiraIssuesUsingJql`, e.g. `project = PROJ ORDER BY created ASC`, ~20-30 issues) → what the project actually builds: domain nouns, named services, recurring stack mentions. Epics and the earliest issues are the most informative.
+- Recent/oldest issues (`searchJiraIssuesUsingJql`, e.g. `project = KAN ORDER BY created ASC`, ~20-30 issues) → what the project actually builds: domain nouns, named services, recurring stack mentions. Epics and the earliest issues are the most informative.
 - **No doc link was given?** Go find one: `search` or `searchConfluenceUsingCql` for the project name / "overview" / "architecture", plus `getJiraIssueRemoteIssueLinks` on an epic (project docs are frequently linked there). If you find a likely page, read it as in 2a and tell the user which page you used — they may want to pass a better one.
 
 Summarize back to the user in ~5 lines what you learned, and **name your sources** (doc page title + URL, Jira key), before you write anything. Read-only — **never** create, edit, comment on, or transition a Jira issue, and never edit a Confluence page, in this skill.
@@ -68,7 +68,7 @@ The test: **if a fact is false for any component in the repo, it does not belong
 
 Keep the existing skeleton and put here, and only here:
 - The real project name, and a **one-or-two-sentence** "what this does" distilled from the description doc. Distilled — never paste the page in. A multi-page Confluence description compresses to two sentences here and a link in the README.
-- `Jira project: PROJ` — so `/feature` and `/fix` know where issue keys come from.
+- `Jira project: KAN` — so `/feature` and `/fix` know where issue keys come from.
 - **Repo layout** — the component table from step 3, kept to `path → what lives there → owner agent`. This is the highest-value thing in the root file: it's how work gets routed to the right directory.
 - **Repo-wide conventions only**: the Docker-only rule, the `Makefile` entry points (`make help` / `up` / `check`), `devops` ownership of `infrastructure/` + `Makefile`, the changelog + agent-trace requirement, branch/PR rules.
 - The existing pointers to agents, skills, and MCP servers.

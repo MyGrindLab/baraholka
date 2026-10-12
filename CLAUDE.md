@@ -32,7 +32,13 @@
 `/feature` and `/fix` accept a **Jira key** (reads the task via Jira MCP, writes status back) **or a free-text description**, and both end at: 100% green → PR + changelog line + agent trace. **They run unattended**: questions and judgment calls become Jira comments and the run continues under a stated assumption, rather than halting for input. Approval/merge is human-only.
 - `/feature <task-number | description>` — **architect-led**: design → split → build → test. New behavior.
 - `/fix <task-number | description>` — **qa-led**: reproduce → diagnose → hand the bug report to the implementer who patches it. Broken behavior.
-- `/init-project <confluence-url | PROJ | description>` — **run once after forking**: reads the project description (a Confluence doc link is the best input) and writes this file + `README.md` + per-package `CLAUDE.md`s. Read-only on Jira/Confluence.
+- `/jira-task <description> [bug|story|task]` — one well-formed issue, after a duplicate check. Format: `.claude/docs/jira-task-format.md`.
+- `/analyze-project [area | focus]` — read-only audit → verified findings → approved ones filed as issues.
+- `/docs-update [page | topic]` — sync the managed Confluence page tree from the repo. Never overwrites human-owned pages.
+- `/prod-check [journey | focus]` — read-only exploratory check of live prod via Playwright → confirmed bugs filed.
+- `/init-project <confluence-url | KAN | description>` — **run once after forking**: reads the project description (a Confluence doc link is the best input) and writes this file + `README.md` + per-package `CLAUDE.md`s. Read-only on Jira/Confluence.
+
+Jira and Confluence are **shared across repos** — this repo's project key, label, Confluence root page, and prod URL live in `.claude/docs/project.md`. Every issue gets the project label; every search is scoped by it.
 
 ## MCP servers (`.mcp.json`)
 - **atlassian** — Jira/Confluence. Run `/mcp` once per fork to authenticate (OAuth, no secrets in repo).

@@ -63,8 +63,8 @@ esac
 
 # --- Telegram ----------------------------------------------------------------
 # Opt-in: skipped entirely when the vars are unset, so this stays safe to commit.
-# Config comes from the repo-root .env (see .env.example) — copy it to .env and
-# fill it in. .env is gitignored; never put the token in settings.json.
+# Config comes from the repo-root .env.claude (see .env.claude.example) — copy it to
+# .env.claude and fill it in. .env.claude is gitignored; never put the token in settings.json.
 #
 #   token:   message @BotFather -> /newbot
 #   chat id: message your bot once, then read
@@ -73,9 +73,9 @@ esac
 # Runs in the background behind a hard 5s timeout, so a dead network delays the
 # hook by seconds instead of hanging it.
 
-if [ -f "${CLAUDE_PROJECT_DIR:-.}/.env" ]; then
+if [ -f "${CLAUDE_PROJECT_DIR:-.}/.env.claude" ]; then
   # shellcheck disable=SC1090
-  set -a; . "${CLAUDE_PROJECT_DIR:-.}/.env" 2>/dev/null || true; set +a
+  set -a; . "${CLAUDE_PROJECT_DIR:-.}/.env.claude" 2>/dev/null || true; set +a
 fi
 
 # Failing silently is right for a hook and wrong for setup: a typo'd token

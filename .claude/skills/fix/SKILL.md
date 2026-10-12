@@ -9,7 +9,7 @@ You orchestrate a bug fix: **existing behavior that's wrong.** The run is unatte
 
 > **`/fix` vs `/feature`** — `/fix` is **qa-led**: qa-tester finds and proves the bug *before* anyone writes a patch, then hands it off. `/feature` is architect-led. The architect is only involved here if the root cause turns out to be a design problem (see step 3).
 
-The task: **$ARGUMENTS**  (either a Jira issue key like `PROJ-123`, or a free-text bug description)
+The task: **$ARGUMENTS**  (either a Jira issue key like `KAN-123`, or a free-text bug description)
 
 ## 0. Autonomy contract — run to the PR without stopping
 
@@ -43,12 +43,14 @@ Concretely: reaching 100% green tests means you commit, push, `gh pr create`, po
 
 **The one place this flow legitimately stops is step 2: a bug you cannot reproduce.** Everything else gets an assumption; an unreproducible bug does not, because a patch written against a guessed repro is how you ship a second bug while closing the first. Diagnosis is not a coin flip you're allowed to take. See step 2 for what to do instead.
 
-**When the run ends** (PR open, or blocked on a repro), call **PushNotification** with one line: `"PROJ-123 PR #42 ready — regression test added"` or `"PROJ-123 not reproducible — need env details, asked on the issue"`. That's the one interruption this flow may generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
+**When the run ends** (PR open, or blocked on a repro), call **PushNotification** with one line: `"KAN-123 PR #42 ready — regression test added"` or `"KAN-123 not reproducible — need env details, asked on the issue"`. That's the one interruption this flow may generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
 
 **No Jira key?** No inbox — batch every assumption into the PR body under **Assumptions** instead.
 
 ## 1. Understand the report
 **If the argument looks like a Jira issue key**: fetch it via the **atlassian** MCP — description, repro steps, expected vs. actual, comments, attachments — restate the bug, and move the issue to **In Progress**. Jira status updates in later steps apply.
+
+**Issue in `Descope`?** Stop before any work: don't implement it, don't transition it, don't comment. Report `KAN-123 is descoped — not implementing` and end the run. `Descope` is the human's decision and only they move issues out of it.
 
 > **Comments are not optional, and they are not free.** `getJiraIssue` omits them unless you ask: pass `fields: ["*all"]` (or the default set **plus `"comment"`**) and read `fields.comment.comments`. On a bug ticket the thread is usually worth more than the description — it's where the reporter adds the *actual* repro ("only happens when logged out"), narrows the affected version, attaches the stack trace, or notes that half the report was user error. Read the comments **newest-first** and treat a later comment as **overriding** the description wherever they disagree.
 >
@@ -103,7 +105,7 @@ Regression: test_expiry_uses_utc — fails on the old code, passes on the new
 Add one line to `CHANGELOG.md` under `[Unreleased]` → `Fixed`, per `.claude/docs/run-report.md`. Describe the bug as the user experienced it, not the patch. Commit it with the fix.
 
 ## 6. Push, PR, and agent trace
-Commit, push, `gh pr create`. If there's a Jira key, put it in the title (`[PROJ-123] fix: ...`) and body. The body covers: the bug, the root cause, the regression test added, test results (100% green), the sibling-risk note from step 4, and an **Assumptions** section listing every call you made without the human — what you assumed and what changes if it's wrong. That section is what makes an unattended run reviewable.
+Commit, push, `gh pr create`. If there's a Jira key, put it in the title (`[KAN-123] fix: ...`) and body. The body covers: the bug, the root cause, the regression test added, test results (100% green), the sibling-risk note from step 4, and an **Assumptions** section listing every call you made without the human — what you assumed and what changes if it's wrong. That section is what makes an unattended run reviewable.
 
 Then post the **agent trace** as a PR comment — format and ~50-line cap in **`.claude/docs/run-report.md`**. For a fix the trace leads with qa's **Diagnosis** (symptom → reproduction → root cause) instead of an architect plan, then the handoff and who patched what.
 
@@ -113,7 +115,7 @@ Once the PR is complete — description written, changelog committed, trace post
 gh pr edit <pr-number> --add-label "ready_for_review"
 ```
 
-That label is the signal that the PR is finished and awaiting review. Create the label once per repo if it doesn't exist (`gh label create ready_for_review`). If there's a Jira key, move the issue to **In Review**.
+That label is the signal that the PR is finished and awaiting review. Create the label once per repo if it doesn't exist (`gh label create ready_for_review`). If there's a Jira key, move the issue to **In Review** — or, on a board without that status (the default Kanban has only To Do → In Progress → Done), leave it **In Progress** and comment the PR link. Status rules: `.claude/docs/project.md` → *Board*.
 
 ## 7. Approval — ONLY the human
 Stop at the open PR. Report the PR link and status. **You never approve or merge.**
