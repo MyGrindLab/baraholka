@@ -22,14 +22,18 @@ BACKEND_ENV     := --env-file infrastructure/backend/.env
 COMPOSE_BACKEND := docker compose -p baraholka-backend $(BACKEND_ENV) -f infrastructure/backend/docker-compose.yml
 COMPOSE_INFRA   := docker compose -p baraholka-infra $(BACKEND_ENV) -f infrastructure/backend/docker-compose-infra.yml
 BACKEND_IMAGE   := baraholkabackend:local
+BACKEND_TEST_IMAGE := baraholkabackend:test
 BACKEND_RUN     := $(COMPOSE_BACKEND) run --rm baraholka-app
+# Hermetic runner for tests/lint/fmt: the Dockerfile `test` stage (dev extras),
+# backend/src bind-mounted for live edits. No env file, no network, no secrets.
+BACKEND_TEST_RUN := docker run --rm --network none -v "$(CURDIR)/backend/src:/app/src" $(BACKEND_TEST_IMAGE)
 BACKEND_TEST    := uv run pytest
 BACKEND_LINT    := uv run ruff check src/ && uv run mypy src/
 BACKEND_FMT     := uv run ruff format src/
 
 .DEFAULT_GOAL := help
 .PHONY: help up up-frontend up-backend up-infra down down-infra restart ps logs build rebuild \
-        sh-frontend sh-backend test test-frontend test-backend e2e \
+        build-test sh-frontend sh-backend test test-frontend test-backend e2e \
         lint lint-frontend lint-backend fmt check migrate clean
 
 help: ## Show available targets
@@ -73,6 +77,9 @@ logs: ## Tail logs from all services (make logs S=<service> for one)
 build: ## Build all images
 	docker build --tag $(BACKEND_IMAGE) -f infrastructure/backend/Dockerfile .
 
+build-test: ## Build the backend test image (runtime deps + dev extras)
+	docker build --target test --tag $(BACKEND_TEST_IMAGE) -f infrastructure/backend/Dockerfile .
+
 rebuild: ## Rebuild all images from scratch
 	docker build --no-cache --tag $(BACKEND_IMAGE) -f infrastructure/backend/Dockerfile .
 
@@ -89,8 +96,8 @@ test: test-frontend test-backend ## Run every test suite
 test-frontend: ## Run frontend tests in its container
 	$(TODO)
 
-test-backend: ## Run backend tests in its container
-	$(BACKEND_RUN) $(BACKEND_TEST)
+test-backend: build-test ## Run backend tests in a container (extra pytest args: A="...")
+	$(BACKEND_TEST_RUN) $(BACKEND_TEST) $(A)
 
 e2e: ## Bring the stack up for browser E2E (driven via the Playwright MCP)
 	$(TODO)
@@ -100,11 +107,11 @@ lint: lint-frontend lint-backend ## Lint every component
 lint-frontend:
 	$(TODO)
 
-lint-backend:
-	$(BACKEND_RUN) sh -c '$(BACKEND_LINT)'
+lint-backend: build-test ## Lint + typecheck the backend (ruff, mypy)
+	$(BACKEND_TEST_RUN) sh -c '$(BACKEND_LINT)'
 
-fmt: ## Format all code in place
-	$(BACKEND_RUN) $(BACKEND_FMT)
+fmt: build-test ## Format all code in place
+	$(BACKEND_TEST_RUN) $(BACKEND_FMT)
 
 check: lint test ## Full pre-PR gate — must be green before a PR is opened
 

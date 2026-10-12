@@ -1,3 +1,4 @@
+import re
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
@@ -18,6 +19,11 @@ logger = setup_logger("api.messages")
 router = APIRouter()
 
 
+async def ensure_channel(name: str) -> None:
+    if not await ChannelService().get_channel_by_name(name):
+        raise HTTPException(status_code=404, detail=f"Channel '{name}' not found")
+
+
 @router.get("/items", response_model=PaginatedResponse)
 async def get_items(
     params: Annotated[MessagePaginationSearchParams, Query()],
@@ -30,15 +36,12 @@ async def get_items(
     }
 
     if params.category and params.subcategory:
-        query[f"classifications.{params.category}"] = {
-            "$regex": params.subcategory,
-            "$options": "i",
-        }
+        query[f"classifications.{params.category}"] = params.subcategory
     elif params.category:
         query[f"classifications.{params.category}"] = {"$exists": True}
 
     if params.search:
-        query["text"] = {"$regex": params.search, "$options": "i"}
+        query["text"] = {"$regex": re.escape(params.search), "$options": "i"}
 
     if params.date_from or params.date_to:
         date_query = {}
@@ -55,6 +58,15 @@ async def get_items(
     if collection_name == "all":
         channel_service = ChannelService()
         channels = await channel_service.get_all_channels()
+
+        if not channels:
+            return PaginatedResponse(
+                items=[],
+                total=0,
+                page=params.page,
+                page_size=params.page_size,
+                total_pages=0,
+            )
 
         first_channel = channels[0]["name"]
 
@@ -104,6 +116,8 @@ async def get_items(
                 repository.db[item["_channel"]], item["message_id"]
             )
     else:
+        await ensure_channel(collection_name)
+
         collection = repository.db[collection_name]
 
         total = await collection.count_documents(query)
@@ -136,6 +150,8 @@ async def get_items(
 
 @router.get("/{channel}/{message_id}", response_model=MessageItem)
 async def get_item_by_id(channel: str, message_id: int) -> MessageItem:
+    await ensure_channel(channel)
+
     repository = MongoDBRepository()
 
     item = await repository.db[channel].find_one(
@@ -157,6 +173,8 @@ async def get_item_by_id(channel: str, message_id: int) -> MessageItem:
 
 @router.get("/{channel}/{message_id}/replies")
 async def get_message_replies(channel: str, message_id: int) -> list[MessageItem]:
+    await ensure_channel(channel)
+
     repository = MongoDBRepository()
 
     parent = await repository.db[channel].find_one({"message_id": message_id})

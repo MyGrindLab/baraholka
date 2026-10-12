@@ -1,0 +1,14 @@
+# Applies to infrastructure/backend/Dockerfile only (BuildKit per-Dockerfile ignore).
+# Context is the repo root, so keep local artefacts out of the backend image.
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/htmlcov
+**/.coverage
+**/.env
+**/.DS_Store
+.git
+frontend

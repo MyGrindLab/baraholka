@@ -71,8 +71,8 @@ app.include_router(tg_router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.allow_origins] if settings.debug else ["*"],
-    allow_credentials=True,
+    allow_origins=["*"] if settings.debug else settings.allow_origins_list,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
