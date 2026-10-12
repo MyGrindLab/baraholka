@@ -8,7 +8,7 @@ One line in `CHANGELOG.md` under `[Unreleased]`, in the right bucket (`Added` / 
 
 Write it for someone reading release notes — the user-visible change, not the patch:
 
-- ✅ `Login no longer crashes on an empty email ([#13](url), PROJ-124)`
+- ✅ `Login no longer crashes on an empty email ([#13](url), KAN-124)`
 - ❌ `Add null check in validateEmail()`
 
 One line per run. If a feature genuinely delivers two user-visible things, two lines. Never a paragraph — the detail lives in the trace below.

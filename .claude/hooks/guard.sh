@@ -88,7 +88,7 @@ deny '(^|[[:space:];&|])(pytest|go[[:space:]]+(test|build|run|mod))([[:space:]]|
      "host toolchain — tests run in containers; use make test (ask devops to add the target)"
 
 # --- secrets -------------------------------------------------------------------
-deny 'git[[:space:]]+add[[:space:]].*\.env([[:space:]]|$)' "never commit .env — add it to .gitignore"
+deny 'git[[:space:]]+add[[:space:]].*\.env(\.claude)?([[:space:]]|$)' "never commit .env or .env.claude — they hold secrets and stay gitignored"
 deny 'gh[[:space:]]+secret[[:space:]]+set'                 "writing a repo secret — the human does this"
 
 exit 0

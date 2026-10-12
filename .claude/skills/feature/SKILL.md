@@ -9,7 +9,7 @@ You orchestrate a feature: **new behavior that doesn't exist yet.** The architec
 
 > **`/feature` vs `/fix`** — `/feature` is architect-led: design first, then build. `/fix` is qa-led: reproduce and diagnose first, then hand a bug report to the implementer. If the request is "X is broken/wrong", use `/fix` instead.
 
-The task: **$ARGUMENTS**  (either a Jira issue key like `PROJ-123`, or a free-text description)
+The task: **$ARGUMENTS**  (either a Jira issue key like `KAN-123`, or a free-text description)
 
 ## 0. Autonomy contract — run to the PR without stopping
 
@@ -41,18 +41,20 @@ That sentence turns an unattended run into an idle one, and it is never correct 
 
 Concretely: reaching 100% green tests means you commit, push, `gh pr create`, post the trace, label it `ready_for_review`, and move the issue to In Review — **in the same turn, without checking in first.**
 
-**Stop and wait only when** you cannot proceed without a credential, an access grant, or a product decision with no defensible default — i.e. any assumption would be a coin flip on scope. That is rare, and "is my work good?" is never one of them. When it happens, comment on the issue, transition it to your board's blocked status, **finish every part of the task that doesn't depend on the answer**, and report what you left out and why.
+**Stop and wait only when** you cannot proceed without a credential, an access grant, or a product decision with no defensible default — i.e. any assumption would be a coin flip on scope. That is rare, and "is my work good?" is never one of them. When it happens, comment on the issue, transition it to your board's blocked status (no such status on the default Kanban → add the label `blocked` instead), **finish every part of the task that doesn't depend on the answer**, and report what you left out and why.
 
-**When the run ends** (PR open, or genuinely blocked), call **PushNotification** with one line: `"PROJ-123 PR #42 ready for review — 4 tests added, 2 assumptions logged on the issue"`. That is the one interruption this flow is allowed to generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
+**When the run ends** (PR open, or genuinely blocked), call **PushNotification** with one line: `"KAN-123 PR #42 ready for review — 4 tests added, 2 assumptions logged on the issue"`. That is the one interruption this flow is allowed to generate. Permission prompts and idle waits are handled by the `Notification` hook — never notify for those.
 
 **No Jira key?** There is no inbox, so batch instead: keep a running list of every assumption you made and put it in the PR body under **Assumptions** — same fields, same purpose.
 
 ## 1. Understand the task
-**If the argument looks like a Jira issue key** (e.g. `PROJ-123`): fetch it via the **atlassian** MCP — title, description, acceptance criteria, comments — restate your understanding, and move the issue to **In Progress**. Jira status updates in later steps apply.
+**If the argument looks like a Jira issue key** (e.g. `KAN-123`): fetch it via the **atlassian** MCP — title, description, acceptance criteria, comments — restate your understanding, and move the issue to **In Progress**. Jira status updates in later steps apply.
+
+**Issue in `Descope`?** Stop before any work: don't implement it, don't transition it, don't comment. Report `KAN-123 is descoped — not implementing` and end the run. `Descope` is the human's decision and only they move issues out of it.
 
 > **Comments are not optional, and they are not free.** `getJiraIssue` omits them unless you ask: pass `fields: ["*all"]` (or the default set **plus `"comment"`**) and read `fields.comment.comments`. A description written at ticket-creation time is the *oldest* statement of the requirement — the thread underneath it is where scope gets cut, acceptance criteria get sharpened, and decisions get reversed. Read the comments **newest-first** and treat a later comment as **overriding** the description wherever they disagree.
 >
-> Fold the result into the restatement you show the user: what the ticket asked for, then **what the thread changed** ("description says X; PROJ-123 comment from 12 Mar narrows it to X-without-Y — building the narrowed version"). If a comment is ambiguous rather than contradictory, that's an ambiguity — ask, per the line below. Say explicitly when there were no comments, so a silent thread is never confused with an unread one.
+> Fold the result into the restatement you show the user: what the ticket asked for, then **what the thread changed** ("description says X; KAN-123 comment from 12 Mar narrows it to X-without-Y — building the narrowed version"). If a comment is ambiguous rather than contradictory, that's an ambiguity — ask, per the line below. Say explicitly when there were no comments, so a silent thread is never confused with an unread one.
 **Otherwise** treat the argument as the task description directly (no Jira). Skip all Jira status updates.
 Either way: if requirements are ambiguous, resolve it yourself and log the assumption per step 0 — don't halt. Create branch `feat/<short-slug>` (prefix the Jira key if there is one) — never work on main/master.
 
@@ -92,7 +94,7 @@ Delegate each task to its owner — parallel where the plan allows, sequenced fo
 Add one line to `CHANGELOG.md` under `[Unreleased]` → `Added` (or `Changed`), per `.claude/docs/run-report.md`. Commit it with the feature.
 
 ## 6. Push, PR, and agent trace
-Commit, push, and `gh pr create`. If there's a Jira key, put it in the PR title (e.g. `[PROJ-123] ...`) and link it in the body. The body covers: what changed, the contract, test results (100% green), the coverage gaps from step 4, and an **Assumptions** section listing every call you made without the human — each with what you assumed and what changes if it's wrong. That section is what makes an unattended run reviewable; a PR that hides its assumptions is worse than one that stopped to ask.
+Commit, push, and `gh pr create`. If there's a Jira key, put it in the PR title (e.g. `[KAN-123] ...`) and link it in the body. The body covers: what changed, the contract, test results (100% green), the coverage gaps from step 4, and an **Assumptions** section listing every call you made without the human — each with what you assumed and what changes if it's wrong. That section is what makes an unattended run reviewable; a PR that hides its assumptions is worse than one that stopped to ask.
 
 Then post the **agent trace** as a PR comment — the format and the ~50-line cap are in **`.claude/docs/run-report.md`**. For a feature the trace leads with the architect's plan and the work-split table.
 
@@ -102,7 +104,7 @@ Once the PR is complete — description written, changelog committed, trace post
 gh pr edit <pr-number> --add-label "ready_for_review"
 ```
 
-That label is the signal that the PR is finished and awaiting review. Create the label once per repo if it doesn't exist (`gh label create ready_for_review`). If there's a Jira key, move the issue to **In Review**.
+That label is the signal that the PR is finished and awaiting review. Create the label once per repo if it doesn't exist (`gh label create ready_for_review`). If there's a Jira key, move the issue to **In Review** — or, on a board without that status (the default Kanban has only To Do → In Progress → Done), leave it **In Progress** and comment the PR link. Status rules: `.claude/docs/project.md` → *Board*.
 
 ## 7. Approval — ONLY the human
 Stop at the open PR. Report the PR link and the review/test status. **You never approve or merge** — that is exclusively the user's action.
