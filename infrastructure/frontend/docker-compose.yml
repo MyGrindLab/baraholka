@@ -1,0 +1,23 @@
+# Frontend dev server (Vite, hot reload). Driven via `make up-frontend`.
+# Image is built by `make build-frontend-dev` (Dockerfile `dev` stage).
+# /api is proxied to VITE_PROXY_TARGET — the backend on baraholka-network.
+services:
+  baraholka-frontend:
+    image: baraholkafrontend:dev
+    container_name: baraholka-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      VITE_PROXY_TARGET: ${VITE_PROXY_TARGET:-http://baraholka-app:8080}
+      # Set to 1/true if file changes aren't picked up (e.g. some Docker Desktop setups).
+      VITE_USE_POLLING: ${VITE_USE_POLLING:-}
+    volumes:
+      - ../../frontend/src:/app/src
+      - ../../frontend/public:/app/public
+    networks:
+      - baraholka-network
+
+networks:
+  baraholka-network:
+    external: true

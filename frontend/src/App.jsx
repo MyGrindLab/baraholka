@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Fragment, useState, useEffect, useCallback, useRef } from 'react'
 import TelegramPost from './TelegramPost'
 import AdBlock from './AdBlock'
 import api from './services/api'
@@ -9,7 +9,7 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [categories, setCategories] = useState({})
   const [channels, setChannels] = useState([])
@@ -307,9 +307,8 @@ function App() {
                   const shouldShowAd = (index + 1) % 6 === 0;
 
                   return (
-                    <>
+                    <Fragment key={`${item.channel_name}-${item.message_id}`}>
                       <TelegramPost
-                        key={`${item.channel_name}-${item.message_id}`}
                         channel={item.channel_name}
                         messageId={item.message_id}
                         classifications={item.classifications}
@@ -320,7 +319,7 @@ function App() {
                           <AdBlock slot={`inline-ad-${Math.floor(index / 6)}`} />
                         </div>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </div>
