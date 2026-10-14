@@ -26,12 +26,16 @@ dependencies = [
 dev = [
     "ruff>=0.8.0",
     "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.0",
+    "mongomock-motor>=0.0.35",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", ]
-addopts = "-p no:warnings --cov=/app --cov-report=html"
-console_output_stype = "count"
+testpaths = ["src/tests"]
+addopts = "-p no:warnings --cov=src --cov-report=term-missing"
 minversion = "7.2.0"
 pythonpath = "."
 filterwarnings = "ignore"
@@ -40,7 +44,7 @@ asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 
 [tool.coverage.run]
-omit = ["tests/*",]
+omit = ["src/tests/*"]
 
 [tool.mypy]
 mypy_path = "/src"

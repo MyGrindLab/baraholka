@@ -6,6 +6,7 @@ on:
     paths:
       - 'backend/**'
       - 'infrastructure/backend/Dockerfile'
+      - 'infrastructure/backend/Dockerfile.dockerignore'
       - '.github/workflows/backend-docker.yml'
   workflow_dispatch:
 

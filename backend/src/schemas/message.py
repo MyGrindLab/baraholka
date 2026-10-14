@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.schemas.pagination import PaginationParams
 
@@ -20,9 +20,9 @@ class MessageItem(BaseModel):
 
 
 class MessagePaginationSearchParams(PaginationParams):
-    channel: str = "baraholka_dubai"
-    search: str | None = None
-    category: str | None = None
-    subcategory: str | None = None
+    channel: str = Field(default="baraholka_dubai", max_length=100)
+    search: str | None = Field(default=None, max_length=200)
+    category: str | None = Field(default=None, max_length=100)
+    subcategory: str | None = Field(default=None, max_length=100)
     date_from: datetime | None = None
     date_to: datetime | None = None

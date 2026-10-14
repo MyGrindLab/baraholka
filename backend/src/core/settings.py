@@ -26,5 +26,11 @@ class Settings(BaseSettings):
 
     messages_batch_size: int = 100
 
+    @property
+    def allow_origins_list(self) -> list[str]:
+        return [
+            origin.strip() for origin in self.allow_origins.split(",") if origin.strip()
+        ]
+
 
 settings = Settings()

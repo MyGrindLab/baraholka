@@ -14,3 +14,4 @@ Every `/feature` and `/fix` run adds **one line** under `[Unreleased]` before th
 
 ### Fixed
 <!-- - The bug as the user experienced it, not the patch: `Login no longer crashes on an empty email ([#13](...), PROJ-124)` -->
+- API only accepts known channels (404 otherwise), matches search text literally, and restricts CORS to `ALLOW_ORIGINS` in production (KAN-54)
