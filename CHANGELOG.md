@@ -9,6 +9,7 @@ Every `/feature` and `/fix` run adds **one line** under `[Unreleased]` before th
 ### Added
 <!-- - New capability, one line, with the PR and Jira key: `Health endpoint at /healthz ([#12](...), PROJ-123)` -->
 - Baraholka backend (FastAPI + Telethon + MongoDB) and frontend (React + Vite) moved into the monorepo, with Docker files under `infrastructure/backend/`
+- `make up` now serves the UI on http://localhost:3000 with hot reload, and `make lint-frontend` / `make test-frontend` run ESLint and Vitest in Docker (KAN-59)
 
 ### Changed
 

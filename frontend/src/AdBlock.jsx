@@ -1,6 +1,7 @@
 // Компонент для рекламных блоков AdSense
 // Пока пустой, готов для будущей настройки рекламы
 
+// eslint-disable-next-line no-unused-vars -- slot/responsive are consumed by the AdSense <ins> markup once it is enabled (see comment below)
 function AdBlock({ slot, format = "auto", responsive = true }) {
   const isVertical = format === "vertical"
 
